@@ -28,7 +28,8 @@ docker compose pull
 
 # ── Sobe a nova versao ───────────────────────────────────────
 echo "[2/4] Iniciando nova versao..."
-docker compose up -d
+docker compose down --remove-orphans
+docker compose up -d --remove-orphans
 
 # ── Aguarda o servico estabilizar ────────────────────────────
 echo "[3/4] Aguardando health check ($((HEALTH_RETRIES * HEALTH_WAIT))s max)..."
