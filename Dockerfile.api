@@ -1,8 +1,24 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.11-slim-trixie
 
-# Instala dependencias do sistema + curl para o healthcheck
+# Instala dependencias do sistema + curl para o healthcheck.
+# trixie (nao bookworm) para bater com o SO da Raspberry Pi 5 -- rpicam-apps-core
+# vem do repositorio oficial da Raspberry Pi Foundation, que so publica build pra trixie.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 libglib2.0-0 libgomp1 curl && \
+    libgl1 libglib2.0-0 libgomp1 curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# rpicam-vid (usado por stream/v3_optimized.py para capturar da camera CSI) nao
+# existe no Debian puro -- vem do repositorio da Raspberry Pi Foundation.
+# [trusted=yes]: a chave de assinatura desse repositorio usa uma auto-assinatura
+# SHA-1, que o verificador sequoia/sqv do apt do trixie passou a rejeitar por
+# politica (SHA-1 "nao seguro desde 2026-02-01") -- rejeita o hash do
+# self-signature da chave, nao indica repositorio comprometido. E o mesmo
+# problema reportado publicamente para este repositorio no Debian 13; enquanto
+# a Raspberry Pi Foundation nao reemite a chave, [trusted=yes] e o unico jeito
+# de instalar daqui num apt de trixie. Repositorio oficial, URL fixa em HTTPS.
+RUN echo "deb [trusted=yes] https://archive.raspberrypi.com/debian/ trixie main" \
+    > /etc/apt/sources.list.d/raspi.list && \
+    apt-get update && apt-get install -y --no-install-recommends rpicam-apps-core && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

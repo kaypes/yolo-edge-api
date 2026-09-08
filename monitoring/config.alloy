@@ -1,0 +1,31 @@
+// monitoring/config.alloy
+// Coleta métricas de hardware (Node Exporter) e de inferência YOLO
+// (yolo_monitor.py) e envia ao Grafana Cloud via Prometheus remote_write.
+//
+// Este arquivo é o TEMPLATE versionado no repo (sem credenciais). A cópia
+// real, com usuário/token preenchidos, vive em /etc/alloy/config.alloy na
+// Raspberry Pi e NÃO é versionada.
+
+// Coleta métricas do Node Exporter local (hardware: CPU, RAM, temperatura)
+prometheus.scrape "node_exporter" {
+  targets    = [{ "__address__" = "localhost:9100" }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+// Coleta a métrica de inferência do YOLO (monitoring/yolo_monitor.py, porta 8000)
+prometheus.scrape "yolo_metrics" {
+  targets    = [{ "__address__" = "localhost:8000" }]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+// Envia as métricas para o Grafana Cloud
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "SEU_REMOTE_WRITE_URL_AQUI"
+
+    basic_auth {
+      username = "SEU_USERNAME_AQUI"
+      password = "SEU_TOKEN_AQUI"
+    }
+  }
+}
