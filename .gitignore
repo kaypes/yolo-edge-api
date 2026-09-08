@@ -31,3 +31,7 @@ preprocessing/outputs/
 
 # Variáveis de ambiente locais
 .env
+
+# Modelo compilado da Edge Impulse (baixado via API, não gerado localmente --
+# re-baixável a qualquer momento com a chave do projeto clonado)
+edge_impulse/models/
