@@ -17,5 +17,9 @@ __pycache__/
 # Imagens de teste grandes
 images/
 
+# Frames brutos/revisados do dataset (evidenciados em prints; não versionados no Git)
+dataset/raw/
+dataset/annotated/
+
 # Variáveis de ambiente locais
 .env
