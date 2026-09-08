@@ -18,6 +18,9 @@ __pycache__/
 # Imagens de teste grandes
 images/
 
+# Video de teste da Aula 7 (grande, so usado localmente pelo yolo_monitor.py)
+monitoring/videos/
+
 # Frames brutos/revisados do dataset (evidenciados em prints; não versionados no Git)
 dataset/raw/
 dataset/annotated/

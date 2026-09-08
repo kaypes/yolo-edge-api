@@ -1,0 +1,54 @@
+{
+  "title": "Uso de Memória RAM",
+  "ruleGroup": "edge-ai-alerts",
+  "folderUID": "edge-ai-yolo",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": { "from": 300, "to": 0 },
+      "datasourceUid": "grafanacloud-prom",
+      "model": {
+        "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+        "instant": true,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "C",
+      "queryType": "",
+      "relativeTimeRange": { "from": 0, "to": 0 },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "threshold",
+        "expression": "A",
+        "conditions": [
+          {
+            "evaluator": { "params": [80], "type": "gt" },
+            "operator": { "type": "and" },
+            "query": { "params": ["A"] },
+            "reducer": { "params": [], "type": "last" },
+            "type": "query"
+          }
+        ],
+        "refId": "C"
+      }
+    }
+  ],
+  "noDataState": "NoData",
+  "execErrState": "Error",
+  "for": "1m",
+  "annotations": {
+    "summary": "Uso de memória RAM da Raspberry Pi 5 acima de 80%"
+  },
+  "labels": {
+    "device": "raspberry",
+    "type": "memory",
+    "project": "edge_ai"
+  },
+  "isPaused": false,
+  "notification_settings": {
+    "receiver": "Administrador"
+  }
+}
