@@ -15,6 +15,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia codigo da aplicacao
 COPY app/ .
 
+# Modulo de pre-processamento -- app/main.py e stream/ importam
+# "preprocessing.preprocessor", entao o pacote precisa existir dentro da
+# imagem (o WORKDIR /app entra no sys.path do processo)
+COPY preprocessing/ ./preprocessing/
+
 EXPOSE 8000
 
 # Executa o Uvicorn

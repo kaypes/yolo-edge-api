@@ -50,6 +50,7 @@ services:
     privileged: true                 # mesmo acesso à câmera do yolo-api
     volumes:
       - ./stream:/app/stream           # código do módulo de streaming
+      - ./preprocessing:/app/preprocessing:ro  # módulo de pré-processamento
       - ./models:/app/models:ro        # pesos do modelo (read-only)
       - /dev:/dev                      # dispositivos de hardware do host
       - /run/udev:/run/udev:ro         # permite ao libcamera identificar o sensor via udev

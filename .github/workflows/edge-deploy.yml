@@ -154,22 +154,33 @@ jobs:
       - name: Recuperar dataset via DVC
         run: dvc pull dataset/exports/epi-v1
 
-      - name: Executar quality gate com dataset customizado
+      - name: Validar wiring do dataset epi-v1 (gate de fumaça)
         run: |
           # O Roboflow exporta data.yaml com "path:" absoluto apontando para a Raspberry Pi
           # (/home/kayque/...). No runner do GitHub esse caminho não existe, então
           # reescrevemos para o workspace do job antes de validar.
           sed -i "s|^path:.*|path: $GITHUB_WORKSPACE/dataset/exports/epi-v1|" \
             dataset/exports/epi-v1/data.yaml
-          # yolov8n.pt é pré-treinado no COCO (80 classes genéricas), sem nenhuma relação
-          # semântica com capacete/colete/pessoa do epi-v1 -- mAP real medido localmente
-          # foi de ~0.0094. O limiar abaixo é um piso temporário apenas para provar que o
-          # dataset real está conectado ao pipeline; substituir por um valor realista
-          # (ex.: 0.50) assim que o modelo for retreinado com o epi-v1 (Aula 5).
+          # ATENÇÃO -- este passo NÃO é um quality gate de verdade ainda.
+          #
+          # O yolov8n.pt é pré-treinado no COCO (80 classes genéricas) e o epi-v1 tem
+          # ['Capacete','Colete','Pessoa']: os índices de classe não correspondem, então
+          # o mAP resultante é ruído puro. Prova disso: a mesma avaliação deu 0.0094 na
+          # Raspberry Pi e 0.0035 neste runner -- 3x de diferença só por versões distintas
+          # de torch/ultralytics. Qualquer limiar fixo perto desses valores é uma moeda ao ar
+          # (foi o que derrubou o run 34192227630).
+          #
+          # Por isso o limiar é 0.0: o passo continua provando o que interessa hoje --
+          # que o dataset flui DVC -> CI e que a validação roda ponta a ponta -- sem
+          # fingir medir qualidade. Substituir por um limiar real (ex.: 0.50) quando
+          # existir um modelo efetivamente treinado no epi-v1.
+          #
+          # Medição com sinal real (classe Pessoa <-> COCO person): mAP@0.5 = 0.6953,
+          # ver preprocessing/utils/eval_person.py.
           python scripts/validate_model.py \
             --model models/yolov8n.pt \
             --dataset dataset/exports/epi-v1/data.yaml \
-            --threshold 0.005
+            --threshold 0.0
 
 
   # ─────────────────────────────────────────────────────────
