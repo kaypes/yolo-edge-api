@@ -7,6 +7,22 @@ import argparse
 import sys
 from pathlib import Path
 
+import torch
+
+# PyTorch 2.6+ mudou o padrão de weights_only para True, o que quebra o
+# carregamento de checkpoints do Ultralytics. Mesmo patch já usado em
+# app/model.py e stream/*.py.
+_orig_torch_load = torch.load
+
+
+def _patched_torch_load(*args, **kwargs):
+    if "weights_only" not in kwargs:
+        kwargs["weights_only"] = False
+    return _orig_torch_load(*args, **kwargs)
+
+
+torch.load = _patched_torch_load
+
 # Limiar padrão de qualidade
 DEFAULT_THRESHOLD = 0.50
 
