@@ -1,0 +1,5 @@
+outs:
+- md5: 184360c7a93319868041743d1731a1c0
+  size: 3788936
+  hash: md5
+  path: mobilenet_int8.tflite

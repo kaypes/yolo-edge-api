@@ -1,0 +1,2 @@
+/mobilenet_fp32.tflite
+/mobilenet_int8.tflite

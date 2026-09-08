@@ -1,0 +1,5 @@
+outs:
+- md5: d12811952ff485d08fe0f1ebfa1453c2
+  size: 13986764
+  hash: md5
+  path: mobilenet_fp32.tflite
