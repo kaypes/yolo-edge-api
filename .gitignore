@@ -35,3 +35,6 @@ preprocessing/outputs/
 # Modelo compilado da Edge Impulse (baixado via API, não gerado localmente --
 # re-baixável a qualquer momento com a chave do projeto clonado)
 edge_impulse/models/
+
+# Chave de criptografia do modelo da Aula 10 -- nunca em texto puro no git
+edgeai_security/.model_key
