@@ -26,10 +26,21 @@ echo "[INFO] Imagem atual: $PREVIOUS"
 echo "[1/4] Baixando nova imagem..."
 docker compose pull
 
+# python3 -m dvc: este script roda via SSH não-interativo (disparado pelo
+# GitHub Actions), esse tipo de shell não carrega o ~/.bashrc, onde normalmente
+# fica o PATH de binários instalados via "pip install --user". Chamar como
+# módulo do Python não depende de PATH nenhum. O pull é necessário porque
+# models/ é montado como volume (não copiado para dentro da imagem), então o
+# binário do modelo no disco da Pi nunca se atualiza sozinho.
+python3 -m dvc pull models/yolo-epi.pt
+
 # ── Sobe a nova versão ───────────────────────────────────────
 echo "[2/4] Iniciando nova versão..."
 docker compose down --remove-orphans
-docker compose up -d --remove-orphans
+# --build reconstrói serviços que usam build: (yolo-stream) em vez de reusar
+# uma imagem antiga em cache -- sem essa flag, o yolo-stream ficava preso
+# numa versão desatualizada a cada deploy.
+docker compose up -d --remove-orphans --build
 
 # ── Aguarda o serviço estabilizar ────────────────────────────
 echo "[3/4] Aguardando health check ($((HEALTH_RETRIES * HEALTH_WAIT))s max)..."
