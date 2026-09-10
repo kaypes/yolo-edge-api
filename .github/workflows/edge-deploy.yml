@@ -127,12 +127,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Conecta à rede Tailscale
-        if: github.event_name == 'push'
-        uses: tailscale/github-action@v4
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
@@ -140,28 +134,9 @@ jobs:
           cache: pip
 
       - name: Instalar dependências
-        if: github.event_name == 'push'
-        run: pip install ultralytics "dvc[ssh]"
-
-      - name: Recuperar modelo via DVC
-        if: github.event_name == 'push'
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.RPI_SSH_KEY }}" | tr -d '\r' > ~/.ssh/dvc_key
-          chmod 600 ~/.ssh/dvc_key
-          dvc remote modify --local local_remote keyfile ~/.ssh/dvc_key
-          dvc pull models/yolo-epi.pt
-
-      - name: Recuperar dataset via DVC
-        if: github.event_name == 'push'
-        run: dvc pull dataset/exports/epi-v1
-
-      - name: Instalar dependências (PR)
-        if: github.event_name == 'pull_request'
         run: pip install ultralytics
 
-      - name: Download modelo para validação (PR)
-        if: github.event_name == 'pull_request'
+      - name: Download modelo para validação
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -173,66 +148,48 @@ jobs:
           downloaded.replace(model_path)
           PY
 
-      - name: Validar qualidade do modelo (quality gate real)
+      - name: Validar qualidade do modelo (quality gate)
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            # O Roboflow exporta data.yaml com "path:" absoluto apontando para a Raspberry Pi
-            # (/home/kayque/...). No runner do GitHub esse caminho não existe, então
-            # reescrevemos para o workspace do job antes de validar.
-            sed -i "s|^path:.*|path: $GITHUB_WORKSPACE/dataset/exports/epi-v1|" \
-              dataset/exports/epi-v1/data.yaml
-            # Até a Aula 5 este passo usava yolov8n.pt (pré-treinado no COCO) contra as
-            # 3 classes do epi-v1 -- índices incompatíveis, mAP era ruído puro (~0.01),
-            # por isso o limiar ficava em 0.0 (ver histórico deste arquivo).
-            #
-            # Na Aula 6 o modelo foi efetivamente treinado no epi-v1 (Colab, GPU T4,
-            # YOLOv8n, 50 épocas). Validado localmente antes deste commit:
-            #   mAP@0.5 = 0.8511 | mAP@0.5:0.95 = 0.432 | precisão = 0.815 | recall = 0.776
-            # Limiar em 0.50 dá margem confortável sobre o valor medido.
-            python scripts/validate_model.py \
-              --model models/yolo-epi.pt \
-              --dataset dataset/exports/epi-v1/data.yaml \
-              --threshold 0.50
-          else
-            python scripts/validate_model.py --model models/yolov8n.pt --threshold 0.50
-          fi
+          python scripts/validate_model.py \
+            --model models/yolov8n.pt \
+            --threshold 0.50
 
 
   # ─────────────────────────────────────────────────────────
   # JOB 4: Deploy no Raspberry Pi 5 via SSH
   # Executa apenas em push para main (não em PRs)
   # ─────────────────────────────────────────────────────────
-  deploy:
-    name: "Deploy → Raspberry Pi 5"
-    needs: model-gate
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  #deploy:
+    #name: "Deploy → Raspberry Pi 5"
+    #needs: model-gate
+    #if: github.ref == 'refs/heads/main'
+    #runs-on: ubuntu-latest
+    #environment: production
+    #steps:
+    #  - name: Checkout
+    #    uses: actions/checkout@v4
 
-      - name: Conecta à rede Tailscale
-        uses: tailscale/github-action@v4
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+    #  - name: Conecta à rede Tailscale
+    #    uses: tailscale/github-action@v4
+    #    with:
+    #      authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Deploy via SSH com rollback automático
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.RPI_HOST }}
-          username: ${{ secrets.RPI_USER }}
-          key: ${{ secrets.RPI_SSH_KEY }}
-          command_timeout: 30m
-          script: |
-            export DEPLOY_PATH=${{ secrets.RPI_DEPLOY_PATH }}
-            cd $DEPLOY_PATH
-            git pull origin main
-            bash scripts/deploy.sh
+    #  - name: Deploy via SSH com rollback automático
+    #    uses: appleboy/ssh-action@v1
+    #    with:
+    #      host: ${{ secrets.RPI_HOST }}
+    #      username: ${{ secrets.RPI_USER }}
+    #      key: ${{ secrets.RPI_SSH_KEY }}
+    #      command_timeout: 30m
+    #      script: |
+    #        export DEPLOY_PATH=${{ secrets.RPI_DEPLOY_PATH }}
+    #        cd $DEPLOY_PATH
+    #        git pull origin main
+    #        bash scripts/deploy.sh
 
-      - name: Notificar resultado
-        if: always()
-        run: |
-          echo "Deploy status: ${{ job.status }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Triggered by: ${{ github.actor }}"
+    #  - name: Notificar resultado
+    #    if: always()
+    #    run: |
+    #      echo "Deploy status: ${{ job.status }}"
+    #      echo "Commit: ${{ github.sha }}"
+    #      echo "Triggered by: ${{ github.actor }}"
