@@ -1,7 +1,7 @@
 services:
 
   yolo-api:
-    image: ghcr.io/kaypes/yolo-edge-api/yolo-api:latest
+    image: ghcr.io/kaypes/yolo-edge-api:latest
     build:
       context: .
       dockerfile: Dockerfile.api
@@ -40,7 +40,7 @@ services:
         condition: service_healthy     # aguarda healthcheck passar
 
   yolo-stream:
-    image: ghcr.io/kaypes/yolo-edge-api/yolo-api:latest  # reaproveita a imagem já publicada pelo CI
+    image: ghcr.io/kaypes/yolo-edge-api:latest  # reaproveita a imagem já publicada pelo CI
     build:
       context: .
       dockerfile: Dockerfile.api
